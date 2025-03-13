@@ -141,20 +141,20 @@ const CreatePoint = () => {
 
                 <Link to="/">
                     <FiArrowLeft />
-            Voltar para home
+                    Back to home
         </Link>
             </header>
 
             <form onSubmit={handleSubmit}>
-                <h1>Cadastro do <br /> ponto de coleta</h1>
+                <h1>Registration of <br /> collection point</h1>
 
                 <fieldset>
                     <legend>
-                        <h2>Dados</h2>
+                        <h2>Data</h2>
                     </legend>
 
                     <div className="field">
-                        <label htmlFor="name">Nome da Entidade</label>
+                        <label htmlFor="name">Entity Name</label>
                         <input
                             type="text"
                             name="name"
@@ -165,7 +165,7 @@ const CreatePoint = () => {
 
                     <div className="field-group">
                         <div className="field">
-                            <label htmlFor="email">E-mail</label>
+                            <label htmlFor="email">Email</label>
                             <input
                                 type="email"
                                 name="email"
@@ -188,8 +188,8 @@ const CreatePoint = () => {
 
                 <fieldset>
                     <legend>
-                        <h2>Endereço</h2>
-                        <span>Selecione o endereço no mapa</span>
+                        <h2>Address</h2>
+                        <span>Select the address on the map</span>
                     </legend>
 
                     <MapContainer center={[-12.68704, -54.58977]} zoom={4}  >
@@ -199,21 +199,21 @@ const CreatePoint = () => {
                         />
                         <Marker position={initialPosition}>
                             <Popup>
-                                Sua localização.
+                            Your location.
                             </Popup>
                         </Marker>
                     </MapContainer>
 
                     <div className="field-group">
                         <div className="field">
-                            <label htmlFor="uf">Estado (UF)</label>
+                            <label htmlFor="uf">State</label>
                             <select
                                 name="uf"
                                 id="uf"
                                 value={selectedUf}
                                 onChange={handleSelectUf}
                             >
-                                <option value="0">Selecione uma UF</option>
+                                <option value="0">Select a State</option>
                                 {ufs.map(uf => (
                                     <option value={uf}>{uf}</option>
                                 ))}
@@ -221,14 +221,14 @@ const CreatePoint = () => {
                         </div>
 
                         <div className="field">
-                            <label htmlFor="city">Cidade</label>
+                            <label htmlFor="city">City</label>
                             <select
                                 name="city"
                                 id="city"
                                 value={selectedCity}
                                 onChange={handleSelectCity}
                             >
-                                <option value="0">Selecione uma Cidade</option>
+                                <option value="0">Select a City</option>
                                 {cities.map(city => (
                                     <option value={city}>{city}</option>
                                 ))}
@@ -240,8 +240,8 @@ const CreatePoint = () => {
 
                 <fieldset>
                     <legend>
-                        <h2>Itens de coleta</h2>
-                        <span>Selecione um ou mais itens abaixo</span>
+                        <h2>Collection items</h2>
+                        <span>Select one or more items below</span>
                     </legend>
 
                     <ul className="items-grid"  >
@@ -259,7 +259,7 @@ const CreatePoint = () => {
                 </fieldset>
 
                 <button type="submit">
-                    Cadastrar ponto de coleta
+                Register collection point
                 </button>
             </form>
 
