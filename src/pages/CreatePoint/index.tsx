@@ -1,7 +1,13 @@
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
+<<<<<<< Updated upstream
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+=======
+import { Link, useNavigate } from 'react-router-dom';
+import { FiAlertTriangle, FiArrowLeft, FiCheckCircle, FiX } from 'react-icons/fi';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+>>>>>>> Stashed changes
 import axios from 'axios';
 import api from '../../services/api';
 
@@ -25,6 +31,33 @@ interface IBGECityResponse {
     nome: string;
 }
 
+const defaultCenter: [number, number] = [-12.68704, -54.58977];
+
+const ActiveLocationMarker = ({ position, visible }: { position: [number, number]; visible: boolean }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!visible) {
+            return;
+        }
+
+        if (position[0] !== 0 && position[1] !== 0) {
+            const targetZoom = map.getZoom() < 12 ? 14 : map.getZoom();
+            map.flyTo(position, targetZoom, { duration: 1.2 });
+        }
+    }, [map, position, visible]);
+
+    if (!visible || (position[0] === 0 && position[1] === 0)) {
+        return null;
+    }
+
+    return (
+        <Marker position={position}>
+            <Popup>Your location.</Popup>
+        </Marker>
+    );
+};
+
 const CreatePoint = () => {
     const [items, setItems] = useState<Item[]>([]);
     const [ufs, setUfs] = useState<string[]>([]);
@@ -40,13 +73,32 @@ const CreatePoint = () => {
     const [selectedCity, setSelectedCity] = useState('0');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
+<<<<<<< Updated upstream
+=======
+    const [hasUserPosition, setHasUserPosition] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalVariant, setModalVariant] = useState<'success' | 'error'>('success');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const navigate = useNavigate();
+>>>>>>> Stashed changes
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(position => {
-            const { latitude, longitude } = position.coords;
-
-            setInitialPosition([latitude, longitude]);
-        });
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const { latitude, longitude } = position.coords;
+                setInitialPosition([latitude, longitude]);
+                setHasUserPosition(true);
+            },
+            () => {
+                setInitialPosition(defaultCenter);
+                setHasUserPosition(false);
+            },
+            {
+                maximumAge: 1000 * 60 * 5,
+                timeout: 10_000,
+            }
+        );
     }, []);
 
     useEffect(() => {
@@ -134,6 +186,36 @@ const CreatePoint = () => {
         alert('Ponto de coleta criado!');
 
     }
+<<<<<<< Updated upstream
+=======
+
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isModalOpen]);
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setModalVariant('success');
+    };
+
+    const handleGoHome = () => {
+        setIsModalOpen(false);
+        navigate('/');
+    };
+    const hasLocation =
+        hasUserPosition && !(initialPosition[0] === 0 && initialPosition[1] === 0);
+    const mapCenter: [number, number] = hasLocation ? initialPosition : defaultCenter;
+    const mapZoom = hasLocation ? 15 : 4;
+
+>>>>>>> Stashed changes
     return (
         <div id="page-create-point">
             <header>
@@ -174,6 +256,7 @@ const CreatePoint = () => {
                             />
                         </div>
 
+<<<<<<< Updated upstream
                         <div className="field">
                             <label htmlFor="whatsapp">Whatsapp</label>
                             <input
@@ -182,6 +265,83 @@ const CreatePoint = () => {
                                 id="whatsapp"
                                 onChange={handleInputChange}
                             />
+=======
+                        <div className="field-group">
+                            <div className="field">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    id="email"
+                                    placeholder="contato@ecoleta.com"
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="whatsapp">Whatsapp</label>
+                                <input
+                                    type="text"
+                                    name="whatsapp"
+                                    id="whatsapp"
+                                    placeholder="+55 (11) 99999-9999"
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>
+                            <div>
+                                <h2>Address</h2>
+                                <span>Select the address on the map</span>
+                            </div>
+                        </legend>
+
+                        <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom>
+                            <TileLayer
+                                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            <ActiveLocationMarker position={initialPosition} visible={hasLocation} />
+                        </MapContainer>
+
+                        <div className="field-group">
+                            <div className="field select-field">
+                                <label htmlFor="uf">State</label>
+                                <select
+                                    name="uf"
+                                    id="uf"
+                                    value={selectedUf}
+                                    onChange={handleSelectUf}
+                                >
+                                    <option value="0">Select a State</option>
+                                    {ufs.map(uf => (
+                                        <option key={uf} value={uf}>
+                                            {uf}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="field select-field">
+                                <label htmlFor="city">City</label>
+                                <select
+                                    name="city"
+                                    id="city"
+                                    value={selectedCity}
+                                    onChange={handleSelectCity}
+                                >
+                                    <option value="0">Select a City</option>
+                                    {cities.map(city => (
+                                        <option key={city} value={city}>
+                                            {city}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+>>>>>>> Stashed changes
                         </div>
                     </div>
                 </fieldset>
