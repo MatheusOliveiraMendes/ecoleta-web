@@ -4,6 +4,10 @@
   --text-color: #6C6C80;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -11,7 +15,7 @@
 }
 
 body {
-  background: #F0F0F5;
+  background: #F5F6FA;
   -webkit-font-smoothing: antialiased;
   color: var(--text-color);
 }

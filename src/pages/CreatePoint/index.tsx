@@ -1,6 +1,6 @@
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { FiArrowLeft } from 'react-icons/fi';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiAlertTriangle, FiArrowLeft, FiCheckCircle, FiX } from 'react-icons/fi';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import axios from 'axios';
 import api from '../../services/api';
@@ -40,6 +40,11 @@ const CreatePoint = () => {
     const [selectedCity, setSelectedCity] = useState('0');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalVariant, setModalVariant] = useState<'success' | 'error'>('success');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(position => {
@@ -129,11 +134,46 @@ const CreatePoint = () => {
             items
         };
 
-        await api.post('points', data);
+        try {
+            setIsSubmitting(true);
+            await api.post('points', data);
 
-        alert('Ponto de coleta criado!');
-
+            setModalVariant('success');
+            setIsModalOpen(true);
+            setFormData({ name: '', email: '', whatsapp: '' });
+            setSelectedItems([]);
+            setSelectedUf('0');
+            setSelectedCity('0');
+        } catch (error) {
+            console.error('Erro ao criar ponto de coleta', error);
+            setModalVariant('error');
+            setIsModalOpen(true);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
+
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isModalOpen]);
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setModalVariant('success');
+    };
+
+    const handleGoHome = () => {
+        setIsModalOpen(false);
+        navigate('/');
+    };
     return (
         <div id="page-create-point">
             <header>
@@ -142,127 +182,213 @@ const CreatePoint = () => {
                 <Link to="/">
                     <FiArrowLeft />
                     Back to home
-        </Link>
+                </Link>
             </header>
 
-            <form onSubmit={handleSubmit}>
-                <h1>Registration of <br /> collection point</h1>
+            <div className="page-body">
+                <section className="intro-panel">
+                    <span className="eyebrow">New partner onboarding</span>
+                    <h1>Register a collection point</h1>
+                    <p>
+                        Provide your entity details, choose the exact location on the map and select
+                        the items your point collects. In less than five minutes you will be ready to
+                        receive deliveries.
+                    </p>
 
-                <fieldset>
-                    <legend>
-                        <h2>Data</h2>
-                    </legend>
+                    <ul className="steps-list">
+                        <li>
+                            <FiCheckCircle />
+                            <span>Keep contact information up to date for residents.</span>
+                        </li>
+                        <li>
+                            <FiCheckCircle />
+                            <span>Mark the pin precisely on the map for accurate navigation.</span>
+                        </li>
+                        <li>
+                            <FiCheckCircle />
+                            <span>Select all recyclable materials accepted by your team.</span>
+                        </li>
+                    </ul>
+                </section>
 
-                    <div className="field">
-                        <label htmlFor="name">Entity Name</label>
-                        <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            onChange={handleInputChange}
-                        />
-                    </div>
+                <form onSubmit={handleSubmit}>
+                    <fieldset>
+                        <legend>
+                            <h2>Data</h2>
+                        </legend>
 
-                    <div className="field-group">
                         <div className="field">
-                            <label htmlFor="email">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                id="email"
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="field">
-                            <label htmlFor="whatsapp">Whatsapp</label>
+                            <label htmlFor="name">Entity Name</label>
                             <input
                                 type="text"
-                                name="whatsapp"
-                                id="whatsapp"
+                                name="name"
+                                id="name"
+                                placeholder="Collecta Recycling Co."
                                 onChange={handleInputChange}
                             />
                         </div>
-                    </div>
-                </fieldset>
 
-                <fieldset>
-                    <legend>
-                        <h2>Address</h2>
-                        <span>Select the address on the map</span>
-                    </legend>
+                        <div className="field-group">
+                            <div className="field">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    id="email"
+                                    placeholder="contato@ecoleta.com"
+                                    onChange={handleInputChange}
+                                />
+                            </div>
 
-                    <MapContainer center={[-12.68704, -54.58977]} zoom={4}  >
-                        <TileLayer
-                            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker position={initialPosition}>
-                            <Popup>
-                            Your location.
-                            </Popup>
-                        </Marker>
-                    </MapContainer>
-
-                    <div className="field-group">
-                        <div className="field">
-                            <label htmlFor="uf">State</label>
-                            <select
-                                name="uf"
-                                id="uf"
-                                value={selectedUf}
-                                onChange={handleSelectUf}
-                            >
-                                <option value="0">Select a State</option>
-                                {ufs.map(uf => (
-                                    <option value={uf}>{uf}</option>
-                                ))}
-                            </select>
+                            <div className="field">
+                                <label htmlFor="whatsapp">Whatsapp</label>
+                                <input
+                                    type="text"
+                                    name="whatsapp"
+                                    id="whatsapp"
+                                    placeholder="+55 (11) 99999-9999"
+                                    onChange={handleInputChange}
+                                />
+                            </div>
                         </div>
+                    </fieldset>
 
-                        <div className="field">
-                            <label htmlFor="city">City</label>
-                            <select
-                                name="city"
-                                id="city"
-                                value={selectedCity}
-                                onChange={handleSelectCity}
-                            >
-                                <option value="0">Select a City</option>
-                                {cities.map(city => (
-                                    <option value={city}>{city}</option>
-                                ))}
-                            </select>
+                    <fieldset>
+                        <legend>
+                            <div>
+                                <h2>Address</h2>
+                                <span>Select the address on the map</span>
+                            </div>
+                        </legend>
+
+                        <MapContainer
+                            center={initialPosition[0] !== 0 ? initialPosition : [-12.68704, -54.58977]}
+                            zoom={initialPosition[0] !== 0 ? 14 : 4}
+                            scrollWheelZoom
+                        >
+                            <TileLayer
+                                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            <Marker position={initialPosition}>
+                                <Popup>Your location.</Popup>
+                            </Marker>
+                        </MapContainer>
+
+                        <div className="field-group">
+                            <div className="field select-field">
+                                <label htmlFor="uf">State</label>
+                                <select
+                                    name="uf"
+                                    id="uf"
+                                    value={selectedUf}
+                                    onChange={handleSelectUf}
+                                >
+                                    <option value="0">Select a State</option>
+                                    {ufs.map(uf => (
+                                        <option key={uf} value={uf}>
+                                            {uf}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="field select-field">
+                                <label htmlFor="city">City</label>
+                                <select
+                                    name="city"
+                                    id="city"
+                                    value={selectedCity}
+                                    onChange={handleSelectCity}
+                                >
+                                    <option value="0">Select a City</option>
+                                    {cities.map(city => (
+                                        <option key={city} value={city}>
+                                            {city}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
+                    </fieldset>
 
+                    <fieldset>
+                        <legend>
+                            <div>
+                                <h2>Collection items</h2>
+                                <span>Select one or more items below</span>
+                            </div>
+                        </legend>
+
+                        <ul className="items-grid">
+                            {items.map(item => (
+                                <li
+                                    key={item.id}
+                                    onClick={() => handleSelectItem(item.id)}
+                                    className={selectedItems.includes(item.id) ? 'selected' : ''}
+                                >
+                                    <img src={item.image_url} alt={item.title} />
+                                    <span>{item.title}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </fieldset>
+
+                    <div className="form-footer">
+                        <button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Registering...' : 'Register collection point'}
+                        </button>
+                        <span>We will review submissions within 2 business days.</span>
                     </div>
-                </fieldset>
-
-                <fieldset>
-                    <legend>
-                        <h2>Collection items</h2>
-                        <span>Select one or more items below</span>
-                    </legend>
-
-                    <ul className="items-grid"  >
-                        {items.map(item => (
-                            <li
-                                key={item.id}
-                                onClick={() => handleSelectItem(item.id)}
-                                className={selectedItems.includes(item.id) ? 'selected' : ''}
-                            >
-                                <img src={item.image_url} alt={item.title} />
-                                <span>{item.title}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </fieldset>
-
-                <button type="submit">
-                Register collection point
-                </button>
-            </form>
-
+                </form>
+            </div>
+            {isModalOpen && (
+                <div className="modal-overlay" role="dialog" aria-modal="true">
+                    <div className="modal-content">
+                        <button
+                            type="button"
+                            aria-label="Close success modal"
+                            className="modal-close"
+                            onClick={handleCloseModal}
+                        >
+                            <FiX />
+                        </button>
+                        <div className={`modal-icon ${modalVariant}`}>
+                            {modalVariant === 'success' ? <FiCheckCircle /> : <FiAlertTriangle />}
+                        </div>
+                        {modalVariant === 'success' ? (
+                            <>
+                                <h2>Collection point registered!</h2>
+                                <p>
+                                    Your submission has been received. We will review the information and make the
+                                    location available to residents shortly.
+                                </p>
+                                <div className="modal-actions row">
+                                    <button type="button" className="secondary" onClick={handleCloseModal}>
+                                        Register another point
+                                    </button>
+                                    <button type="button" onClick={handleGoHome}>
+                                        Go to home
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h2>We ran into an issue</h2>
+                                <p>
+                                    Something went wrong while saving the collection point. Please verify your data or
+                                    try again in a few moments.
+                                </p>
+                                <div className="modal-actions single">
+                                    <button type="button" onClick={handleCloseModal}>
+                                        Dismiss and retry
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
