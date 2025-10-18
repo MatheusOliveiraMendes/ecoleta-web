@@ -1,7 +1,7 @@
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiAlertTriangle, FiArrowLeft, FiCheckCircle, FiX } from 'react-icons/fi';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import axios from 'axios';
 import api from '../../services/api';
 
@@ -25,6 +25,33 @@ interface IBGECityResponse {
     nome: string;
 }
 
+const defaultCenter: [number, number] = [-12.68704, -54.58977];
+
+const ActiveLocationMarker = ({ position, visible }: { position: [number, number]; visible: boolean }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!visible) {
+            return;
+        }
+
+        if (position[0] !== 0 && position[1] !== 0) {
+            const nextZoom = map.getZoom() < 12 ? 14 : map.getZoom();
+            map.flyTo(position, nextZoom, { duration: 1.2 });
+        }
+    }, [map, position, visible]);
+
+    if (!visible || (position[0] === 0 && position[1] === 0)) {
+        return null;
+    }
+
+    return (
+        <Marker position={position}>
+            <Popup>Your location.</Popup>
+        </Marker>
+    );
+};
+
 const CreatePoint = () => {
     const [items, setItems] = useState<Item[]>([]);
     const [ufs, setUfs] = useState<string[]>([]);
@@ -40,6 +67,7 @@ const CreatePoint = () => {
     const [selectedCity, setSelectedCity] = useState('0');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
+    const [hasUserPosition, setHasUserPosition] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalVariant, setModalVariant] = useState<'success' | 'error'>('success');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,11 +75,22 @@ const CreatePoint = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(position => {
-            const { latitude, longitude } = position.coords;
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const { latitude, longitude } = position.coords;
 
-            setInitialPosition([latitude, longitude]);
-        });
+                setInitialPosition([latitude, longitude]);
+                setHasUserPosition(true);
+            },
+            () => {
+                setInitialPosition(defaultCenter);
+                setHasUserPosition(false);
+            },
+            {
+                maximumAge: 1000 * 60 * 5,
+                timeout: 10_000,
+            }
+        );
     }, []);
 
     useEffect(() => {
@@ -174,6 +213,9 @@ const CreatePoint = () => {
         setIsModalOpen(false);
         navigate('/');
     };
+    const hasLocation = hasUserPosition && !(initialPosition[0] === 0 && initialPosition[1] === 0);
+    const mapCenter: [number, number] = hasLocation ? initialPosition : defaultCenter;
+    const mapZoom = hasLocation ? 15 : 4;
     return (
         <div id="page-create-point">
             <header>
@@ -261,18 +303,12 @@ const CreatePoint = () => {
                             </div>
                         </legend>
 
-                        <MapContainer
-                            center={initialPosition[0] !== 0 ? initialPosition : [-12.68704, -54.58977]}
-                            zoom={initialPosition[0] !== 0 ? 14 : 4}
-                            scrollWheelZoom
-                        >
+                        <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom>
                             <TileLayer
                                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             />
-                            <Marker position={initialPosition}>
-                                <Popup>Your location.</Popup>
-                            </Marker>
+                            <ActiveLocationMarker position={initialPosition} visible={hasLocation} />
                         </MapContainer>
 
                         <div className="field-group">
