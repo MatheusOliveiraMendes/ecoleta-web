@@ -9,6 +9,12 @@ import api from '../../services/api';
 import './styles.css';
 
 import logo from '../../assets/logo.svg';
+import batteries from '../../assets/batteries.svg';
+import cookingOil from '../../assets/cooking-oil.svg';
+import electronics from '../../assets/electronics.svg';
+import lamps from '../../assets/lamps.svg';
+import organic from '../../assets/organic.svg';
+import paperCardboard from '../../assets/paper-cardboard.svg';
 
 
 interface Item {
@@ -26,6 +32,31 @@ interface IBGECityResponse {
 }
 
 const defaultCenter: [number, number] = [-12.68704, -54.58977];
+
+const itemImageMapById: Record<number, string> = {
+    1: lamps,
+    2: batteries,
+    3: paperCardboard,
+    4: electronics,
+    5: organic,
+    6: cookingOil,
+};
+
+const itemImageMapBySlug: Record<string, string> = {
+    lampadas: lamps,
+    pilhasebaterias: batteries,
+    papeisepapelao: paperCardboard,
+    residuoseletronicos: electronics,
+    residuosorganicos: organic,
+    oleodecozinha: cookingOil,
+};
+
+const normalizeTitle = (title: string) =>
+    title
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
 
 const ActiveLocationMarker = ({ position, visible }: { position: [number, number]; visible: boolean }) => {
     const map = useMap();
@@ -94,8 +125,19 @@ const CreatePoint = () => {
     }, []);
 
     useEffect(() => {
-        api.get('items').then(res => {
-            setItems(res.data);
+        api.get<Item[]>('items').then(({ data }) => {
+            const formattedItems = data.map(item => {
+                const normalizedTitle = normalizeTitle(item.title);
+                const localImage =
+                    itemImageMapById[item.id] ?? itemImageMapBySlug[normalizedTitle];
+
+                return {
+                    ...item,
+                    image_url: localImage ?? item.image_url,
+                };
+            });
+
+            setItems(formattedItems);
         });
     }, []);
 
